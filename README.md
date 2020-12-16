@@ -3,11 +3,11 @@
 A tiny [memoization] library written in C++17.
 # Usage
 Normal caching 
-```
+```c++
 auto m = memoization::memoize([](int) { return 42; });
 ```
 With a **l**east **r**ecently **u**sed cache type(LRU)
-```
+```c++
 auto m = memoization::memoizeWithLRU<3>([](int) { return 42; });
 ```
 
