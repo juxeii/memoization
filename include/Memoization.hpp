@@ -92,9 +92,6 @@ namespace memoization::detail
     struct create_cache<LRUCache<CacheCapacity>, Callable>
     {
         static_assert(CacheCapacity > 0, "LRU cache capacity must be greater 0!");
-        static_assert(
-            !std::is_reference_v<callable_result_t<Callable>>,
-            "Callable return type for a LRU cache cannot be a reference!");
         using type = LRUCacheImpl<OrderedMap<Callable>, CacheCapacity>;
     };
 
