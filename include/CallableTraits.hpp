@@ -7,49 +7,36 @@
 namespace memoization::details
 {
     template <typename T>
-    struct callable_signature_impl
+    struct function_components
     {
     };
 
     template <typename R, typename... Args>
-    struct callable_signature_impl<std::function<R(Args...)>>
+    struct function_components<std::function<R(Args...)>>
     {
-        using type = R(Args...);
+        using type = std::tuple<R(Args...), R, std::tuple<std::decay_t<Args>...>>;
     };
 
     template <typename T>
-    struct callable_result_impl
-    {
-    };
+    using function_components_t = typename function_components<T>::type;
 
-    template <typename R, typename... Args>
-    struct callable_result_impl<std::function<R(Args...)>>
-    {
-        using type = R;
-    };
+    template <typename T, auto I>
+    using get_function_component_t = std::tuple_element_t<I, function_components_t<T>>;
 
     template <typename T>
-    struct callable_arguments_impl
-    {
-    };
+    using function_signature_t = get_function_component_t<T, 0>;
 
-    template <typename R, typename... Args>
-    struct callable_arguments_impl<std::function<R(Args...)>>
-    {
-        using type = std::tuple<std::decay_t<Args>...>;
-    };
+    template <typename T>
+    using function_result_t = get_function_component_t<T, 1>;
+
+    template <typename T>
+    using function_arguments_t = get_function_component_t<T, 2>;
 
 } // namespace memoization::details
 
 namespace memoization
 {
-    template <typename T>
-    struct remove_cvref : std::remove_cv<std::remove_reference_t<T>>
-    {
-    };
-
-    template <typename T>
-    using remove_cvref_t = typename remove_cvref<T>::type;
+    using namespace memoization::details;
 
     template <typename T>
     using AsFunction = decltype(std::function{std::declval<T>()});
@@ -85,21 +72,12 @@ namespace memoization
     using callable_to_function_t = typename callable_to_function<T>::type;
 
     template <typename T>
-    struct callable_result
-        : memoization::details::callable_result_impl<callable_to_function_t<T>>
-    {
-    };
+    using callable_result_t = function_result_t<callable_to_function_t<T>>;
 
     template <typename T>
-    using callable_result_t = typename callable_result<T>::type;
+    using callable_arguments_t = function_arguments_t<callable_to_function_t<T>>;
 
     template <typename T>
-    struct callable_arguments
-        : memoization::details::callable_arguments_impl<callable_to_function_t<T>>
-    {
-    };
-
-    template <typename T>
-    using callable_arguments_t = typename callable_arguments<T>::type;
+    using remove_cvref_t = typename std::remove_cv<std::remove_reference_t<T>>::type;
 
 } // namespace memoization

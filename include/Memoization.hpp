@@ -9,7 +9,7 @@
 
 namespace memoization
 {
-    template <auto cacheCapacity>
+    template <auto CacheCapacity>
     struct LRUCache
     {
     };
@@ -24,7 +24,7 @@ namespace memoization::detail
     template <typename Callable>
     using OrderedMap = std::map<callable_arguments_t<Callable>, callable_result_t<Callable>, std::less<>>;
 
-    template <typename Container, auto cacheCapacity>
+    template <typename Container, auto CacheCapacity>
     struct LRUCacheImpl
     {
         Container cacheMap{};
@@ -38,8 +38,8 @@ namespace memoization::detail
         return iterator == cache.end() ? std::nullopt : std::optional{iterator};
     }
 
-    template <typename T, auto cacheCapacity, typename Key>
-    auto findInCache(const LRUCacheImpl<T, cacheCapacity> &lru, const Key &key)
+    template <typename T, auto CacheCapacity, typename Key>
+    auto findInCache(const LRUCacheImpl<T, CacheCapacity> &lru, const Key &key)
     {
         return findInCache(lru.cacheMap, key);
     }
@@ -50,10 +50,10 @@ namespace memoization::detail
         return cache.try_emplace(std::forward<decltype(args)>(args)...).first;
     }
 
-    template <typename T, auto cacheCapacity, typename... Args>
-    auto emplaceInCache(LRUCacheImpl<T, cacheCapacity> &lru, Args &&... args)
+    template <typename T, auto CacheCapacity, typename... Args>
+    auto emplaceInCache(LRUCacheImpl<T, CacheCapacity> &lru, Args &&... args)
     {
-        if (lru.cacheQueue.size() == cacheCapacity)
+        if (lru.cacheQueue.size() == CacheCapacity)
         {
             lru.cacheMap.erase(lru.cacheQueue.front());
             lru.cacheQueue.pop();
@@ -83,36 +83,37 @@ namespace memoization::detail
     }
 
     template <typename Cache, typename Callable>
-    struct CreateCache
+    struct create_cache
     {
         using type = OrderedMap<Callable>;
     };
 
-    template <auto cacheCapacity, typename Callable>
-    struct CreateCache<LRUCache<cacheCapacity>, Callable>
+    template <auto CacheCapacity, typename Callable>
+    struct create_cache<LRUCache<CacheCapacity>, Callable>
     {
-        static_assert(cacheCapacity > 0, "LRU cache capacity must be greater 0!");
+        static_assert(CacheCapacity > 0, "LRU cache capacity must be greater 0!");
         static_assert(
             !std::is_reference_v<callable_result_t<Callable>>,
             "Callable return type for a LRU cache cannot be a reference!");
-        using type = LRUCacheImpl<OrderedMap<Callable>, cacheCapacity>;
+        using type = LRUCacheImpl<OrderedMap<Callable>, CacheCapacity>;
     };
 
-    template <typename T, typename U>
-    using CreateCache_t = typename CreateCache<T, U>::type;
+    template <typename Cache, typename Callable>
+    using create_cache_t = typename create_cache<Cache, Callable>::type;
 
-    template <typename CacheTag, typename ReturnType>
-    struct ReturnTypeDeduction : std::add_lvalue_reference<std::add_const_t<ReturnType>>
+    template <typename CacheTag, typename Result>
+    struct result_adaption : std::add_lvalue_reference<std::add_const_t<Result>>
     {
     };
 
-    template <auto cacheCapacity, typename ReturnType>
-    struct ReturnTypeDeduction<LRUCache<cacheCapacity>, ReturnType> : remove_cvref<ReturnType>
+    template <auto CacheCapacity, typename Result>
+    struct result_adaption<LRUCache<CacheCapacity>, Result>
     {
+        using type = remove_cvref_t<Result>;
     };
 
-    template <typename CacheTag, typename ReturnType>
-    using ReturnTypeDeductionT = typename ReturnTypeDeduction<CacheTag, ReturnType>::type;
+    template <typename CacheTag, typename Result>
+    using result_adaption_t = typename result_adaption<CacheTag, Result>::type;
 
 } // namespace memoization::detail
 
@@ -123,24 +124,24 @@ namespace memoization
     template <typename CacheTag = MapCache, typename Callable>
     [[nodiscard]] auto memoize(Callable &&callable) noexcept
     {
-        using ReturnType = callable_result_t<Callable>;
-        static_assert(!std::is_void_v<ReturnType>, "Callable with void return type cannot be memoized!");
+        using ResultType = callable_result_t<Callable>;
+        static_assert(!std::is_void_v<ResultType>, "Callable with void return type cannot be memoized!");
         static_assert(
-            !(std::is_reference_v<ReturnType> && !std::is_const_v<std::remove_reference_t<ReturnType>>),
+            !(std::is_reference_v<ResultType> && !std::is_const_v<std::remove_reference_t<ResultType>>),
             "Callable with non-const reference return type cannot be memoized!");
-        static_assert(std::is_copy_constructible_v<ReturnType>, "Callable return type must be copy constructible!");
+        static_assert(std::is_copy_constructible_v<ResultType>, "Callable return type must be copy constructible!");
         static_assert(
             std::tuple_size_v<callable_arguments_t<Callable>> > 0, "Callable with no arguments cannot be memoized!");
 
-        using AdjustedReturnType = ReturnTypeDeductionT<CacheTag, ReturnType>;
-        using CacheType = CreateCache_t<CacheTag, callable_to_function_t<Callable>>;
+        using AdaptedResultType = result_adaption_t<CacheTag, ResultType>;
+        using CacheType = create_cache_t<CacheTag, callable_to_function_t<Callable>>;
 
-        return createMemoizer<AdjustedReturnType>(std::forward<Callable>(callable), CacheType{});
+        return createMemoizer<AdaptedResultType>(std::forward<Callable>(callable), CacheType{});
     }
 
-    template <auto cacheCapacity, typename Callable>
+    template <auto CacheCapacity, typename Callable>
     [[nodiscard]] auto memoizeWithLRU(Callable &&callable) noexcept
     {
-        return memoize<LRUCache<cacheCapacity>>(std::forward<Callable>(callable));
+        return memoize<LRUCache<CacheCapacity>>(std::forward<Callable>(callable));
     }
 } // namespace memoization
