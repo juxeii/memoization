@@ -47,7 +47,7 @@ namespace memoization::detail
     template <typename Cache, typename... Args>
     auto emplaceInCache(Cache &cache, Args &&... args)
     {
-        return cache.try_emplace(std::forward<decltype(args)>(args)...).first;
+        return cache.try_emplace(std::forward<Args>(args)...).first;
     }
 
     template <typename T, auto CacheCapacity, typename... Args>
@@ -58,7 +58,7 @@ namespace memoization::detail
             lru.cacheMap.erase(lru.cacheQueue.front());
             lru.cacheQueue.pop();
         }
-        auto iterator = emplaceInCache(lru.cacheMap, std::forward<decltype(args)>(args)...);
+        auto iterator = emplaceInCache(lru.cacheMap, std::forward<Args>(args)...);
         return lru.cacheQueue.emplace(iterator);
     }
 
