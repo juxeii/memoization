@@ -104,9 +104,8 @@ namespace memoization::detail
     };
 
     template <auto CacheCapacity, typename Result>
-    struct result_adaption<LRUCache<CacheCapacity>, Result>
+    struct result_adaption<LRUCache<CacheCapacity>, Result> : std::remove_cv<std::remove_reference_t<Result>>
     {
-        using type = remove_cvref_t<Result>;
     };
 
     template <typename CacheTag, typename Result>

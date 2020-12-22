@@ -77,7 +77,4 @@ namespace memoization
     template <typename T>
     using callable_arguments_t = function_arguments_t<callable_to_function_t<T>>;
 
-    template <typename T>
-    using remove_cvref_t = typename std::remove_cv<std::remove_reference_t<T>>::type;
-
 } // namespace memoization
