@@ -58,7 +58,7 @@ namespace memoization::detail
             lru.cacheMap.erase(lru.cacheQueue.front());
             lru.cacheQueue.pop();
         }
-        auto iterator = emplaceInCache(lru.cacheMap, std::forward<Args>(args)...);
+        auto iterator{emplaceInCache(lru.cacheMap, std::forward<Args>(args)...)};
         return lru.cacheQueue.emplace(iterator);
     }
 
@@ -72,7 +72,7 @@ namespace memoization::detail
     template <typename CacheReturn, typename Callable, typename Cache>
     auto createMemoizer(Callable callable, Cache cache)
     {
-        return [callable = std::move(callable), cache = std::move(cache)](auto &&... args) mutable -> CacheReturn {
+        return [callable{std::move(callable)}, cache{std::move(cache)}](auto &&... args) mutable -> CacheReturn {
             auto arguments{std::forward_as_tuple(std::forward<decltype(args)>(args)...)};
             if (auto maybeValue{findInCache(cache, arguments)})
             {
