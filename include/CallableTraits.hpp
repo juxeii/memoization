@@ -72,9 +72,21 @@ namespace memoization
     using callable_to_function_t = typename callable_to_function<T>::type;
 
     template <typename T>
-    using callable_result_t = function_result_t<callable_to_function_t<T>>;
+    struct callable_result
+    {
+        using type = function_result_t<callable_to_function_t<T>>;
+    };
 
     template <typename T>
-    using callable_arguments_t = function_arguments_t<callable_to_function_t<T>>;
+    using callable_result_t = typename callable_result<T>::type;
+
+    template <typename T>
+    struct callable_arguments
+    {
+        using type = function_arguments_t<callable_to_function_t<T>>;
+    };
+
+    template <typename T>
+    using callable_arguments_t = typename callable_arguments<T>::type;
 
 } // namespace memoization
