@@ -89,4 +89,18 @@ namespace
         auto m = memoization::memoizeWithLRU<1>([](int) { return 42; });
         static_assert(std::is_same_v<decltype(m(42)), int>);
     }
+
+    TEST_CASE_METHOD(MemoizeFixture, "Function objects are memorizable")
+    {
+        struct FunctionObject
+        {
+            int operator()(int x) const
+            {
+                return x + 42;
+            }
+        };
+        auto memoized = memoization::memoize(FunctionObject{});
+
+        REQUIRE(memoized(3) == 45);
+    }
 } // namespace

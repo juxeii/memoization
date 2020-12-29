@@ -63,7 +63,7 @@ namespace memoization::detail
     }
 
     template <typename Callable, typename Arguments, typename Cache>
-    auto applyFunction(const Callable &callable, const Arguments &arguments, Cache &cache)
+    auto applyFunction(Callable &callable, const Arguments &arguments, Cache &cache)
     {
         auto result{std::apply(callable, arguments)};
         return emplaceInCache(cache, arguments, std::move(result));
