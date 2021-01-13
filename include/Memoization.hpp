@@ -44,21 +44,21 @@ namespace memoization::detail
         return findInCache(lru.cacheMap, key);
     }
 
-    template <typename Cache, typename... Args>
-    auto emplaceInCache(Cache &cache, Args &&... args)
+    template <typename Cache, typename Key, typename Value>
+    auto emplaceInCache(Cache &cache, const Key &key, Value &&value)
     {
-        return cache.try_emplace(std::forward<Args>(args)...).first;
+        return cache.try_emplace(key, std::forward<Value>(value)).first;
     }
 
-    template <typename T, auto CacheCapacity, typename... Args>
-    auto emplaceInCache(LRUCacheImpl<T, CacheCapacity> &lru, Args &&... args)
+    template <typename T, auto CacheCapacity, typename Key, typename Value>
+    auto emplaceInCache(LRUCacheImpl<T, CacheCapacity> &lru, const Key &key, Value &&value)
     {
         if (lru.cacheQueue.size() == CacheCapacity)
         {
             lru.cacheMap.erase(lru.cacheQueue.front());
             lru.cacheQueue.pop();
         }
-        auto iterator{emplaceInCache(lru.cacheMap, std::forward<Args>(args)...)};
+        auto iterator{emplaceInCache(lru.cacheMap, key, std::forward<Value>(value))};
         return lru.cacheQueue.emplace(iterator);
     }
 
